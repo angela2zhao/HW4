@@ -1,0 +1,163 @@
+---
+title: "HW4"
+author: "Angela Zhao"
+output: pdf_document
+---
+
+```{r global_options, echo=FALSE}
+knitr::opts_chunk$set(warning=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=60))
+```
+
+```{r echo=FALSE,message=FALSE}
+#load libraries
+library(tidyverse)
+library(mosaic)
+#datasets
+gas <- read_csv('gasprices.csv')
+sclass <- read_csv('sclass.csv')
+pilot <- read_csv('nbc_pilotsurvey.csv')
+ebay <- read_csv('ebay.csv')
+```
+
+az9934  
+https://github.com/angela2zhao/HW4
+
+
+# **Problem 1**
+
+# Theory A
+*Gas stations charge more if they lack direct competition in sight.*
+``` {r echo = FALSE}
+# bootstrap samples
+boot_competition = do(10000) * diffmean(Price~Competitors,data=mosaic::resample(gas))
+# confidence interval
+confint(boot_competition,level=0.95)
+```
+The data does not support the theory that gas stations charge more if they lack direct competition in sight. 0 falls within the 95% confidence interval, which means that the difference is not statistically significant. 
+
+# Theory B
+*The richer the area, the higher the gas prices.*
+``` {r echo = FALSE}
+# bootstrap samples for linear model of Income of Area and Price of Gas
+boot_income = do(10000) * lm(Price~Income,data=mosaic::resample(gas))
+
+#confidence intervals
+confint(boot_income,level=0.95)
+```
+The data supports the theory that the gas prices are higher the richer the area. 0 doesn't fall within the 95% confidence interval, which means that the slope is statistically significant. As the median household income of an area increases by \$1, we are 95% confident that the price of gas increases by \$0.0000007 to \$0.0000017. 
+
+# Theory C
+*Gas stations at stoplights charge more.*
+``` {r echo = FALSE}
+#bootstrap samples
+boot_light = do(10000) * diffmean(Price~Stoplight,data=mosaic::resample(gas))
+#confidence interval
+confint(boot_light,level=0.95)
+```
+The data does not support the theory that gas stations at stoplights charge more. 0 falls within the 95% confidence interval, which means that the difference is not statistically significant. 
+
+\newpage
+# Theory D
+*Gas stations with direct highway access charge more.*
+``` {r echo = FALSE}
+#bootstrap samples
+boot_highway = do(10000) * diffmean(Price~Highway,data=mosaic::resample(gas))
+#confidence interval
+confint(boot_highway,level=0.95)
+```
+The data does support the theory that gas stations with direct highway access charge more. 0 doesn't fall within the 95% confidence interval, which means that the difference is statistically significant. The difference in price between gas stations with and without direct highway access is somewhere between \$0.008 and \$0.08, with 95% confidence.
+
+# Theory E
+*Shell charges more than all other non-Shell brands.*
+``` {r echo = FALSE}
+#add variable for shell or nonshell brands
+gas = mutate(gas,Shell=ifelse(Brand=="Shell",yes=TRUE,no=FALSE))
+#bootstrap samples
+boot_shell = do(10000) * diffmean(Price~Shell,data=mosaic::resample(gas))
+#confidence interval
+confint(boot_shell,level=0.95)
+```
+The data does not support the theory that Shell gas stations charge more than all other non-Shell brands. 0 falls within the 95% confidence interval, which means that the difference is not statistically significant. 
+
+
+\newpage
+# **Problem 2**
+
+# Part A
+```{r echo =FALSE}
+#filter data
+sclass_filter1 = filter(sclass,year==2011 & trim == "63 AMG")
+
+#calculate bootstrap confidence interval
+boot_sclass1 = do(10000) * mean(~mileage,data=mosaic::resample(sclass_filter1))
+confint(boot_sclass1,level=0.95)
+```
+The average mileage of 2011 S-Class 63 AMGs that were hitting the used-car market are between the upper and lower bounds of the confidence interval, with 95% confidence.
+
+# Part B
+```{r echo =FALSE}
+#filter data
+sclass_filter2 = filter(sclass,year==2014 & trim == "550")
+
+#make new black variable
+sclass_filter2 = mutate(sclass_filter2,isBlack = ifelse(color=="Black",yes=TRUE,no=FALSE))
+
+#calculate bootstrap confidence interval for proportion
+boot_sclass2 = do(10000) * prop(~isBlack,data=mosaic::resample(sclass_filter2))
+confint(boot_sclass2,level=0.95) 
+```
+The proportion of all 2014 S-Class 550s that were painted black are between the upper and lower bounds of the confidence interval, with 95% confidence.
+
+
+\newpage
+# **Problem 3** 
+
+# Part A
+Question: Who makes people happier: Ed or Earl?  
+I calculated a bootstrap confidence interval by resampling the data and calculating the mean from each sample using the diffmean and resample functions, which I put into the confint function to find the confidence interval for 95% confidence.
+```{r echo = FALSE}
+# bootstrap samples
+boot_showhappy = do(10000) * diffmean(Q1_Happy~Show,data=mosaic::resample(filter(pilot,Show == "Living with Ed" | Show == "My Name is Earl")))
+# confidence interval
+confint(boot_showhappy,level=0.95)
+```
+The evidence does not allow us to determine an answer. We cannot conclude that there is evidence that one show consistently produces a higher mean Q1_Happy response among viewers. 0 lies within the 95% confidence interval, which means that the difference is not statistically significant. 
+
+# Part B 
+Question: Which reality/contest show made people feel more annoyed?  
+I calculated a bootstrap confidence interval by resampling the data and calculating the mean from each sample using the diffmean and resample functions, which I put into the confint function to find the confidence interval for 95% confidence.
+```{r echo = FALSE}
+# bootstrap confidence interval
+boot_showannoyed = do(10000) * diffmean(Q1_Annoyed~Show,data=mosaic::resample(filter(pilot,Show == "The Biggest Loser" | Show == "The Apprentice: Los Angeles")))
+confint(boot_showannoyed,level=0.95)
+```
+The Apprentice: Los Angeles made people feel more annoyed than The Biggest Loser. We can conclude that there is evidence that one show consistently produces a higher mean Q1_Annoyed response among viewers. 0 does not lie within the 95% confidence interval, which means that the difference is statistically significant. 
+
+# Part C
+Question: What proportion of American TV watchers would we expect to give a response of 4 or greater to the “Q2_Confusing” question?  
+I calculated a bootstrap confidence interval by resampling the data and calculating the proportion from each sample using the prop and resample functions, which I  put into the confint function to find the confidence interval for 95% confidence.  
+```{r echo=FALSE}
+# create variable for confusing rating of 4 or higher
+pilot = mutate(pilot, confusing = ifelse(Q2_Confusing>=4,yes=TRUE,no=FALSE))
+#bootstrap confidence interval
+boot_showconfused = do(10000) * prop(~confusing,data=mosaic::resample(pilot))
+confint(boot_showconfused,level=0.95)
+```
+We are 95% confident that between 10.3% and 11.8% of American TV watchers would give a response of 4 or greater to the "Q2_Confusing" question.
+
+
+\newpage
+# **Problem 4**
+
+Question: Does the extra traffic brought to EBay from paid search results justify the cost of the ads themselves?  
+I first created a new variable using mutate to calculate the ratio of revenue before and after the experiment started. I then calculated a bootstrap confidence interval by resampling the data and calculating the mean from each sample using the diffmean and resample functions, which I put into the confint function to find the confidence interval for 95% confidence.
+```{r echo=FALSE}
+# add variable for revenue ratio
+ebay = ebay %>%
+  mutate(revenue_ratio = rev_after/rev_before)
+
+#bootstrap confidence interval
+boot_ebay = do(10000) * diffmean(revenue_ratio~adwords_pause,data=mosaic::resample(ebay))
+confint(boot_ebay,level=0.95)
+```
+The data provides evidence for the idea that the paid search advertising on Google creates extra revenue for EBay. 0 does not fall within the 95% confidence interval, which means the difference is statistically significant to show that the revenue ratio for the treatment group, who got ads paused, is lower than the control group. We are 95% confident that the difference in revenue is between \$0.01 and \$0.09.  
