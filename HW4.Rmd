@@ -38,6 +38,9 @@ The data does not support the theory that gas stations charge more if they lack 
 # Theory B
 *The richer the area, the higher the gas prices.*
 ``` {r echo = FALSE}
+# prop of original data
+lm(Price~Income,data=gas)
+
 # bootstrap samples for linear model of Income of Area and Price of Gas
 boot_income = do(10000) * lm(Price~Income,data=mosaic::resample(gas))
 
@@ -60,6 +63,8 @@ The data does not support the theory that gas stations at stoplights charge more
 # Theory D
 *Gas stations with direct highway access charge more.*
 ``` {r echo = FALSE}
+# diffmean of original data
+diffmean(Price~Highway,data=gas)
 #bootstrap samples
 boot_highway = do(10000) * diffmean(Price~Highway,data=mosaic::resample(gas))
 #confidence interval
