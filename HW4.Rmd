@@ -39,7 +39,7 @@ The data does not support the theory that gas stations charge more if they lack 
 *The richer the area, the higher the gas prices.*
 ``` {r echo = FALSE}
 # prop of original data
-lm(Price~Income,data=gas)
+coef(lm(Price~Income,data=gas))
 
 # bootstrap samples for linear model of Income of Area and Price of Gas
 boot_income = do(10000) * lm(Price~Income,data=mosaic::resample(gas))
